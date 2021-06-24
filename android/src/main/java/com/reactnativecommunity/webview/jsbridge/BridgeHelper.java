@@ -9,7 +9,6 @@ import android.util.Log;
 import com.reactnativecommunity.webview.RNCWebView;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -276,22 +275,5 @@ public class BridgeHelper implements WebViewJavascriptBridge {
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
-	}
-
-	public boolean shouldOverrideUrlLoading(String url) {
-		try {
-			// decode 之前，处理 % 和 +
-			String replacedUrl = url.replaceAll("%(?![0-9a-fA-F]{2})", "%25").replaceAll("\\+", "%2B");
-			url = URLDecoder.decode(replacedUrl, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			Log.w(TAG, e);
-		}
-
-		if (url.startsWith(BridgeUtil.YY_RETURN_DATA)) { // 如果是返回数据
-			handlerReturnData(url);
-		} else if (url.startsWith(BridgeUtil.YY_OVERRIDE_SCHEMA)) { //
-			flushMessageQueue();
-		}
-		return false;
 	}
 }

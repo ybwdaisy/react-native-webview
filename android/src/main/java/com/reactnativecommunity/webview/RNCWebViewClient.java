@@ -17,6 +17,11 @@ import com.reactnativecommunity.webview.events.TopHttpErrorEvent;
 import com.reactnativecommunity.webview.events.TopLoadingErrorEvent;
 import com.reactnativecommunity.webview.events.TopLoadingFinishEvent;
 import com.reactnativecommunity.webview.events.TopLoadingStartEvent;
+import com.reactnativecommunity.webview.events.TopShouldStartLoadWithRequestEvent;
+import com.reactnativecommunity.webview.jsbridge.BridgeUtil;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 
 import javax.annotation.Nullable;
 
@@ -50,27 +55,27 @@ public class RNCWebViewClient extends WebViewClient {
 		super.onPageStarted(webView, url, favicon);
 		mLastLoadFailed = false;
 
-		dispatchEvent(
-				webView,
-				new TopLoadingStartEvent(
-						webView.getId(),
-						createWebViewEvent(webView, url)));
+		dispatchEvent(webView, new TopLoadingStartEvent(webView.getId(), createWebViewEvent(webView, url)));
 	}
 
 	@Override
 	public boolean shouldOverrideUrlLoading(WebView view, String url) {
-//		dispatchEvent(
-//				view,
-//				new TopShouldStartLoadWithRequestEvent(
-//						view.getId(),
-//						createWebViewEvent(view, url)));
-//		try {
-//			url = URLDecoder.decode(url, "UTF-8");
-//		} catch (UnsupportedEncodingException e) {
-//			e.printStackTrace();
-//		}
+		try {
+			String replacedUrl = url.replaceAll("%(?![0-9a-fA-F]{2})", "%25").replaceAll("\\+", "%2B");
+			url = URLDecoder.decode(replacedUrl, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
 
-		return webView.bridgeHelper.shouldOverrideUrlLoading(url);
+		}
+		if (url.startsWith(BridgeUtil.YY_RETURN_DATA)) {
+			webView.bridgeHelper.handlerReturnData(url);
+			return true;
+		} else if (url.startsWith(BridgeUtil.YY_OVERRIDE_SCHEMA)) {
+			webView.bridgeHelper.flushMessageQueue();
+			return true;
+		} else {
+			dispatchEvent(view, new TopShouldStartLoadWithRequestEvent(view.getId(), createWebViewEvent(view, url)));
+		}
+		return false;
 	}
 
 
@@ -98,9 +103,7 @@ public class RNCWebViewClient extends WebViewClient {
 		eventData.putDouble("code", errorCode);
 		eventData.putString("description", description);
 
-		dispatchEvent(
-				webView,
-				new TopLoadingErrorEvent(webView.getId(), eventData));
+		dispatchEvent(webView, new TopLoadingErrorEvent(webView.getId(), eventData));
 	}
 
 	@RequiresApi(api = Build.VERSION_CODES.M)
@@ -116,18 +119,12 @@ public class RNCWebViewClient extends WebViewClient {
 			eventData.putInt("statusCode", errorResponse.getStatusCode());
 			eventData.putString("description", errorResponse.getReasonPhrase());
 
-			dispatchEvent(
-					webView,
-					new TopHttpErrorEvent(webView.getId(), eventData));
+			dispatchEvent(webView, new TopHttpErrorEvent(webView.getId(), eventData));
 		}
 	}
 
 	protected void emitFinishEvent(WebView webView, String url) {
-		dispatchEvent(
-				webView,
-				new TopLoadingFinishEvent(
-						webView.getId(),
-						createWebViewEvent(webView, url)));
+		dispatchEvent(webView, new TopLoadingFinishEvent(webView.getId(), createWebViewEvent(webView, url)));
 	}
 
 	protected WritableMap createWebViewEvent(WebView webView, String url) {
