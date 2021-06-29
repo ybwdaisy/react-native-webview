@@ -287,7 +287,17 @@ static NSDictionary* customCertificatesForHost;
               if (response[0] == NSNull.null && [response[1] isKindOfClass:NSArray.class] && [response[1][0] isKindOfClass:NSArray.class]) {
                   NSData *jsonData = [response[1][0][1] dataUsingEncoding:NSUTF8StringEncoding];
                   NSDictionary *parsedData = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:nil];
-                  responseCallback([parsedData objectForKey:@"token"]);
+                  responseCallback(@{
+                      @"status": @0,
+                      @"msg": @"getToken:ok",
+                      @"data": [parsedData objectForKey:@"token"],
+                  });
+              } else {
+                  responseCallback(@{
+                      @"status": @-1,
+                      @"msg": @"getToken:fail",
+                      @"data": @{},
+                  });
               }
           }];
       });
@@ -299,7 +309,17 @@ static NSDictionary* customCertificatesForHost;
                 if (response[0] == NSNull.null && [response[1] isKindOfClass:NSArray.class] && [response[1][0] isKindOfClass:NSArray.class]) {
                     NSData *jsonData = [response[1][0][1] dataUsingEncoding:NSUTF8StringEncoding];
                     NSDictionary *parsedData = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:nil];
-                    responseCallback([parsedData objectForKey:@"box"]);
+                    responseCallback(@{
+                        @"status": @0,
+                        @"msg": @"getBoxInfo:ok",
+                        @"data": [parsedData objectForKey:@"box"],
+                    });
+                } else {
+                    responseCallback(@{
+                        @"status": @-1,
+                        @"msg": @"getBoxInfo:fail",
+                        @"data": @{},
+                    });
                 }
             }];
         });
