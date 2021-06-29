@@ -326,9 +326,30 @@ static NSDictionary* customCertificatesForHost;
     }];
     [self.bridge registerHandler:@"openPage" handler:^(id data, WVJBResponseCallback responseCallback) {
         NSMutableDictionary<NSString *, id> *event = [self baseEvent];
-        [event addEntriesFromDictionary: @{@"data": data}];
-        _onMessage(event);
+        [event addEntriesFromDictionary: @{@"type": @"open"}];
+        if (data) {
+            [event addEntriesFromDictionary: @{@"data": data}];
+        }
+        self->_onMessage(event);
         responseCallback(event);
+    }];
+    [self.bridge registerHandler:@"closeWindow" handler:^(id data, WVJBResponseCallback responseCallback) {
+        NSMutableDictionary<NSString *, id> *event = [self baseEvent];
+        [event addEntriesFromDictionary: @{@"type": @"close"}];
+        if (data) {
+            [event addEntriesFromDictionary: @{@"data": data}];
+        }
+        self->_onMessage(event);
+        responseCallback(event);
+    }];
+    [self.bridge registerHandler:@"setNavConfig" handler:^(id data, WVJBResponseCallback responseCallback) {
+      NSMutableDictionary<NSString *, id> *event = [self baseEvent];
+      [event addEntriesFromDictionary: @{@"type": @"close"}];
+      if (data) {
+          [event addEntriesFromDictionary: @{@"data": data}];
+      }
+      self->_onMessage(event);
+      responseCallback(event);
     }];
   }
 }
