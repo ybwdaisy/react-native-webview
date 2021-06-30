@@ -15,7 +15,7 @@
 #import <React/RCTUIKit.h>
 #endif // !TARGET_OS_OSX
 #import "WebViewJavascriptBridge.h"
-#import "RNCAsyncStorage.h"
+#import "RNCWebViewBridge.h"
 
 #import "objc/runtime.h"
 
@@ -87,6 +87,7 @@ static NSDictionary* customCertificatesForHost;
 @property (nonatomic, strong) WKUserScript *atStartScript;
 @property (nonatomic, strong) WKUserScript *atEndScript;
 @property (nonatomic, strong) WebViewJavascriptBridge *bridge;
+
 @end
 
 @implementation RNCWebView
@@ -278,78 +279,11 @@ static NSDictionary* customCertificatesForHost;
     [self setHideKeyboardAccessoryView: _savedHideKeyboardAccessoryView];
     [self setKeyboardDisplayRequiresUserAction: _savedKeyboardDisplayRequiresUserAction];
     [self visitSource];
-    
-    self.bridge = [WebViewJavascriptBridge bridgeForWebView:_webView];
-    [self.bridge registerHandler:@"getToken" handler:^(id data, WVJBResponseCallback responseCallback) {
-      RNCAsyncStorage *storage = [[RNCAsyncStorage alloc] init];
-      dispatch_sync(storage.methodQueue, ^{
-          [storage multiGet:@[@"persist:primary"] callback:^(NSArray *response) {
-              if (response[0] == NSNull.null && [response[1] isKindOfClass:NSArray.class] && [response[1][0] isKindOfClass:NSArray.class]) {
-                  NSData *jsonData = [response[1][0][1] dataUsingEncoding:NSUTF8StringEncoding];
-                  NSDictionary *parsedData = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:nil];
-                  responseCallback(@{
-                      @"status": @0,
-                      @"msg": @"getToken:ok",
-                      @"data": [parsedData objectForKey:@"token"],
-                  });
-              } else {
-                  responseCallback(@{
-                      @"status": @-1,
-                      @"msg": @"getToken:fail",
-                      @"data": @{},
-                  });
-              }
-          }];
-      });
-    }];
-    [self.bridge registerHandler:@"getBoxInfo" handler:^(id data, WVJBResponseCallback responseCallback) {
-        RNCAsyncStorage *storage = [[RNCAsyncStorage alloc] init];
-        dispatch_sync(storage.methodQueue, ^{
-            [storage multiGet:@[@"persist:primary"] callback:^(NSArray *response) {
-                if (response[0] == NSNull.null && [response[1] isKindOfClass:NSArray.class] && [response[1][0] isKindOfClass:NSArray.class]) {
-                    NSData *jsonData = [response[1][0][1] dataUsingEncoding:NSUTF8StringEncoding];
-                    NSDictionary *parsedData = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:nil];
-                    responseCallback(@{
-                        @"status": @0,
-                        @"msg": @"getBoxInfo:ok",
-                        @"data": [parsedData objectForKey:@"box"],
-                    });
-                } else {
-                    responseCallback(@{
-                        @"status": @-1,
-                        @"msg": @"getBoxInfo:fail",
-                        @"data": @{},
-                    });
-                }
-            }];
-        });
-    }];
-    [self.bridge registerHandler:@"openPage" handler:^(id data, WVJBResponseCallback responseCallback) {
-        NSMutableDictionary<NSString *, id> *event = [self baseEvent];
-        [event addEntriesFromDictionary: @{@"type": @"open"}];
-        if (data) {
-            [event addEntriesFromDictionary: @{@"data": data}];
+      
+    self.bridge = [RNCWebViewBridge bridgeForWebView:_webView callback:^(NSMutableDictionary * _Nonnull data) {
+        if (self->_onMessage) {
+            self->_onMessage(data);
         }
-        self->_onMessage(event);
-        responseCallback(event);
-    }];
-    [self.bridge registerHandler:@"closeWindow" handler:^(id data, WVJBResponseCallback responseCallback) {
-        NSMutableDictionary<NSString *, id> *event = [self baseEvent];
-        [event addEntriesFromDictionary: @{@"type": @"close"}];
-        if (data) {
-            [event addEntriesFromDictionary: @{@"data": data}];
-        }
-        self->_onMessage(event);
-        responseCallback(event);
-    }];
-    [self.bridge registerHandler:@"setNavConfig" handler:^(id data, WVJBResponseCallback responseCallback) {
-      NSMutableDictionary<NSString *, id> *event = [self baseEvent];
-      [event addEntriesFromDictionary: @{@"type": @"close"}];
-      if (data) {
-          [event addEntriesFromDictionary: @{@"data": data}];
-      }
-      self->_onMessage(event);
-      responseCallback(event);
     }];
   }
 }
