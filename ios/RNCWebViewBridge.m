@@ -12,53 +12,27 @@
 
 @implementation RNCWebViewBridge
 
-+ (instancetype)bridgeForWebView:(id)webView callback:(void(^)(NSMutableDictionary *data))callback {
+- (instancetype)bridgeForWebView:(id)webView callback:(void(^)(NSMutableDictionary *data))callback {
     WebViewJavascriptBridge *bridge = [WebViewJavascriptBridge bridgeForWebView:webView];
     // 获取登录token
     [bridge registerHandler:@"getToken" handler:^(id data, WVJBResponseCallback responseCallback) {
-      RNCAsyncStorage *storage = [[RNCAsyncStorage alloc] init];
-      dispatch_sync(storage.methodQueue, ^{
-          [storage multiGet:@[@"persist:primary"] callback:^(NSArray *response) {
-              if (response[0] == NSNull.null && [response[1] isKindOfClass:NSArray.class] && [response[1][0] isKindOfClass:NSArray.class]) {
-                  NSData *jsonData = [response[1][0][1] dataUsingEncoding:NSUTF8StringEncoding];
-                  NSDictionary *parsedData = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:nil];
-                  responseCallback(@{
-                      @"status": @0,
-                      @"msg": @"getToken:ok",
-                      @"data": [parsedData objectForKey:@"token"],
-                  });
-              } else {
-                  responseCallback(@{
-                      @"status": @-1,
-                      @"msg": @"getToken:fail",
-                      @"data": @{},
-                  });
-              }
-          }];
-      });
+        [self getStorageByKey:@"token" callback:^(NSDictionary * _Nonnull data) {
+            responseCallback(@{
+                @"status": @0,
+                @"msg": @"getBoxInfo:ok",
+                @"data": data,
+            });
+        }];
     }];
     // 获取当前选中唾液盒
     [bridge registerHandler:@"getBoxInfo" handler:^(id data, WVJBResponseCallback responseCallback) {
-        RNCAsyncStorage *storage = [[RNCAsyncStorage alloc] init];
-        dispatch_sync(storage.methodQueue, ^{
-            [storage multiGet:@[@"persist:primary"] callback:^(NSArray *response) {
-                if (response[0] == NSNull.null && [response[1] isKindOfClass:NSArray.class] && [response[1][0] isKindOfClass:NSArray.class]) {
-                    NSData *jsonData = [response[1][0][1] dataUsingEncoding:NSUTF8StringEncoding];
-                    NSDictionary *parsedData = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:nil];
-                    responseCallback(@{
-                        @"status": @0,
-                        @"msg": @"getBoxInfo:ok",
-                        @"data": [parsedData objectForKey:@"box"],
-                    });
-                } else {
-                    responseCallback(@{
-                        @"status": @-1,
-                        @"msg": @"getBoxInfo:fail",
-                        @"data": @{},
-                    });
-                }
-            }];
-        });
+        [self getStorageByKey:@"box" callback:^(NSDictionary * _Nonnull data) {
+            responseCallback(@{
+                @"status": @0,
+                @"msg": @"getBoxInfo:ok",
+                @"data": data,
+            });
+        }];
     }];
     // 打开RN页面
     [bridge registerHandler:@"openPage" handler:^(id data, WVJBResponseCallback responseCallback) {
@@ -124,4 +98,20 @@
     
     return bridge;
 }
-@end
+
+- (void)getStorageByKey:(NSString *)key callback:(void(^)(NSDictionary *data))callback {
+    RNCAsyncStorage *storage = [[RNCAsyncStorage alloc] init];
+    dispatch_sync(storage.methodQueue, ^{
+        [storage multiGet:@[@"persist:primary"] callback:^(NSArray *response) {
+            if (response[0] == NSNull.null && [response[1] isKindOfClass:NSArray.class] && [response[1][0] isKindOfClass:NSArray.class]) {
+                NSData *jsonData = [response[1][0][1] dataUsingEncoding:NSUTF8StringEncoding];
+                NSDictionary *parsedData = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:nil];
+                callback([parsedData objectForKey:key]);
+            } else {
+                callback(@{});
+            }
+        }];
+    });
+}
+
+@end;
