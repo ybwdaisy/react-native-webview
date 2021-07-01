@@ -7,13 +7,8 @@
 
 #import <Foundation/Foundation.h>
 
-NS_ASSUME_NONNULL_BEGIN
-
 @interface RNCWebViewBridge : NSObject
 
 - (instancetype)bridgeForWebView:(id)webView callback:(void(^)(NSMutableDictionary *data))callback;
-- (void)getStorageByKey:(NSString *)key callback:(void(^)(NSDictionary *data))callback;
 
 @end
-
-NS_ASSUME_NONNULL_END
