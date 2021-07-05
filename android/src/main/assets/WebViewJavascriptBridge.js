@@ -18,7 +18,7 @@
 
     var stoId = null;
 
-    var CUSTOM_PROTOCOL_SCHEME = 'yy';
+    var CUSTOM_PROTOCOL_SCHEME = 'https';
     var QUEUE_HAS_MESSAGE = '__QUEUE_MESSAGE__/';
 
     var responseCallbacks = {};

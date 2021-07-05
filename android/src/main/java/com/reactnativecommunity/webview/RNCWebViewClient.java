@@ -66,10 +66,10 @@ public class RNCWebViewClient extends WebViewClient {
 		} catch (UnsupportedEncodingException e) {
 
 		}
-		if (url.startsWith(BridgeUtil.YY_RETURN_DATA)) {
+		if (url.startsWith(BridgeUtil.CUSTOM_RETURN_DATA)) {
 			webView.bridgeHelper.handlerReturnData(url);
 			return true;
-		} else if (url.startsWith(BridgeUtil.YY_OVERRIDE_SCHEMA)) {
+		} else if (url.startsWith(BridgeUtil.CUSTOM_OVERRIDE_SCHEMA)) {
 			webView.bridgeHelper.flushMessageQueue();
 			return true;
 		} else {

@@ -8,9 +8,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 public class BridgeUtil {
-	public final static String YY_OVERRIDE_SCHEMA = "yy://";
-	public final static String YY_RETURN_DATA = YY_OVERRIDE_SCHEMA + "return/";//格式为   yy://return/{function}/returncontent
-	final static String YY_FETCH_QUEUE = YY_RETURN_DATA + "_fetchQueue/";
+	public final static String CUSTOM_OVERRIDE_SCHEMA = "https://";
+	public final static String CUSTOM_RETURN_DATA = CUSTOM_OVERRIDE_SCHEMA + "return/";//格式为   https://return/{function}/returncontent
+	final static String CUSTOM_FETCH_QUEUE = CUSTOM_RETURN_DATA + "_fetchQueue/";
 	final static String EMPTY_STR = "";
 	final static String UNDERLINE_STR = "_";
 	final static String SPLIT_MARK = "/";
@@ -25,11 +25,11 @@ public class BridgeUtil {
 	
 	
 	public static String getDataFromReturnUrl(String url) {
-		if(url.startsWith(YY_FETCH_QUEUE)) {
-			return url.replace(YY_FETCH_QUEUE, EMPTY_STR);
+		if(url.startsWith(CUSTOM_FETCH_QUEUE)) {
+			return url.replace(CUSTOM_FETCH_QUEUE, EMPTY_STR);
 		}
 		
-		String temp = url.replace(YY_RETURN_DATA, EMPTY_STR);
+		String temp = url.replace(CUSTOM_RETURN_DATA, EMPTY_STR);
 		String[] functionAndData = temp.split(SPLIT_MARK);
 
         if(functionAndData.length >= 2) {
@@ -43,7 +43,7 @@ public class BridgeUtil {
 	}
 
 	public static String getFunctionFromReturnUrl(String url) {
-		String temp = url.replace(YY_RETURN_DATA, EMPTY_STR);
+		String temp = url.replace(CUSTOM_RETURN_DATA, EMPTY_STR);
 		String[] functionAndData = temp.split(SPLIT_MARK);
 		if(functionAndData.length >= 1){
 			return functionAndData[0];
