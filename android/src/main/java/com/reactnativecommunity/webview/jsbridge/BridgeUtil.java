@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 public class BridgeUtil {
-	public final static String CUSTOM_OVERRIDE_SCHEMA = "https://";
+	public final static String CUSTOM_OVERRIDE_SCHEMA = "genebox://";
 	public final static String CUSTOM_RETURN_DATA = CUSTOM_OVERRIDE_SCHEMA + "return/";//格式为   https://return/{function}/returncontent
 	final static String CUSTOM_FETCH_QUEUE = CUSTOM_RETURN_DATA + "_fetchQueue/";
 	final static String EMPTY_STR = "";

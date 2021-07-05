@@ -4,13 +4,11 @@ import android.annotation.TargetApi;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
@@ -20,18 +18,13 @@ import android.webkit.URLUtil;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
-import com.facebook.common.logging.FLog;
-import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
-import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.common.MapBuilder;
-import com.facebook.react.common.ReactConstants;
 import com.facebook.react.common.build.ReactBuildConfig;
 import com.facebook.react.module.annotations.ReactModule;
-import com.facebook.react.modules.storage.ReactDatabaseSupplier;
 import com.facebook.react.uimanager.SimpleViewManager;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.annotations.ReactProp;
@@ -39,8 +32,7 @@ import com.facebook.react.views.scroll.ScrollEventType;
 import com.reactnativecommunity.webview.events.TopHttpErrorEvent;
 import com.reactnativecommunity.webview.events.TopLoadingProgressEvent;
 import com.reactnativecommunity.webview.events.TopShouldStartLoadWithRequestEvent;
-import com.reactnativecommunity.webview.jsbridge.BridgeHandler;
-import com.reactnativecommunity.webview.jsbridge.CallBackFunction;
+import com.reactnativecommunity.webview.jsbridge.BridgeInterface;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,9 +40,7 @@ import org.json.JSONObject;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 
@@ -193,92 +183,10 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       }
     });
 
-    webView.registerHandler("openPage", new BridgeHandler() {
-      @Override
-      public void handler(String data, CallBackFunction function) {
-        webView.onMessage(data);
-        function.onCallBack("openPage: response from Java");
-      }
-    });
-
-    webView.registerHandler("getToken", new BridgeHandler() {
-      @Override
-      public void handler(String data, CallBackFunction function) {
-        String[] columns = {"key", "value"};
-        String[] keys = {"persist:primary"};
-
-        HashSet<String> keysRemaining = new HashSet<>();
-        WritableArray result = Arguments.createArray();
-        for (int keyStart = 0; keyStart < keys.length; keyStart += 999) {
-          int keyCount = Math.min(keys.length - keyStart, 999);
-          Cursor cursor = ReactDatabaseSupplier.getInstance(reactContext).get()
-                  .query(
-                          "catalystLocalStorage",
-                          columns,
-                          buildKeySelection(keyCount),
-                          buildKeySelectionArgs(keys, keyStart, keyCount),
-                          null,
-                          null,
-                          null
-                  );
-          keysRemaining.clear();
-          try {
-            if (cursor.getCount() != keys.length) {
-              for (int keyIndex = keyStart; keyIndex < keyStart + keyCount; keyIndex++) {
-                keysRemaining.add(keys[keyIndex]);
-              }
-            }
-
-            if (cursor.moveToFirst()) {
-              do {
-                WritableArray row = Arguments.createArray();
-                row.pushString(cursor.getString(0));
-                row.pushString(cursor.getString(1));
-                result.pushArray(row);
-                keysRemaining.remove(cursor.getString(0));
-              } while (cursor.moveToNext());
-            }
-          } catch (Exception e) {
-            FLog.w(ReactConstants.TAG, e.getMessage(), e);
-            return;
-          } finally {
-            cursor.close();
-          }
-
-          for (String key : keysRemaining) {
-            WritableArray row = Arguments.createArray();
-            row.pushString(key);
-            row.pushNull();
-            result.pushArray(row);
-          }
-          keysRemaining.clear();
-        }
-
-        String jsonToken = result.getArray(0).getString(1);
-        try {
-          JSONObject jsonObject = new JSONObject(jsonToken);
-          function.onCallBack(jsonObject.get("token").toString());
-        } catch (JSONException e) {
-          e.printStackTrace();
-        }
-      }
-    });
+    BridgeInterface bridgeInterface = new BridgeInterface(reactContext, webView);
+    bridgeInterface.registerHandlers();
 
     return webView;
-  }
-
-  static String buildKeySelection(int selectionCount) {
-    String[] list = new String[selectionCount];
-    Arrays.fill(list, "?");
-    return "key IN (" + TextUtils.join(", ", list) + ")";
-  }
-
-  static String[] buildKeySelectionArgs(String[] keys, int start, int count) {
-    String[] selectionArgs = new String[count];
-    for (int keyIndex = 0; keyIndex < count; keyIndex++) {
-      selectionArgs[keyIndex] = keys[start + keyIndex];
-    }
-    return selectionArgs;
   }
 
   @ReactProp(name = "javaScriptEnabled")

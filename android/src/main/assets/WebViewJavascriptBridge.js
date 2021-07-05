@@ -18,7 +18,7 @@
 
     var stoId = null;
 
-    var CUSTOM_PROTOCOL_SCHEME = 'https';
+    var CUSTOM_PROTOCOL_SCHEME = 'genebox';
     var QUEUE_HAS_MESSAGE = '__QUEUE_MESSAGE__/';
 
     var responseCallbacks = {};
