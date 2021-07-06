@@ -159,17 +159,17 @@ public class BridgeInterface {
 			}
 		});
 		// 分享到微信朋友圈
-		webView.registerHandler("setShareData", new BridgeHandler() {
+		webView.registerHandler("shareToTimeline", new BridgeHandler() {
 			@Override
 			public void handler(String data, CallBackFunction function) {
-				handleMessage("setShareData", data, MessageType.MessageTypeShareTimeline, function);
+				handleMessage("shareToTimeline", data, MessageType.MessageTypeShareTimeline, function);
 			}
 		});
 		// 分享到社区
-		webView.registerHandler("setShareData", new BridgeHandler() {
+		webView.registerHandler("shareToFeed", new BridgeHandler() {
 			@Override
 			public void handler(String data, CallBackFunction function) {
-				handleMessage("setShareData", data, MessageType.MessageTypeShareFeed, function);
+				handleMessage("shareToFeed", data, MessageType.MessageTypeShareFeed, function);
 			}
 		});
 	}
