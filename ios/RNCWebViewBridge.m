@@ -34,7 +34,7 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
         [self getStorageByKey:@"token" callback:^(NSDictionary * _Nonnull data) {
             responseCallback(@{
                 @"status": @0,
-                @"msg": @"getBoxInfo:ok",
+                @"msg": @"getToken:ok",
                 @"data": data,
             });
         }];
@@ -194,12 +194,12 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
 
 - (void)handleMessage:(NSString*)name widthData:(id)data andType:(MessageType)type messageCallback:(MessageCallback)messageCallback responseCallback:(WVJBResponseCallback)responseCallback {
     NSMutableDictionary *event = [[NSMutableDictionary alloc]init];
-    [event addEntriesFromDictionary: @{@"type": [self convertToString:type]}];
-    if (data) {
-        [event addEntriesFromDictionary: @{@"data": data}];
-    }
+    [event setValue:[self convertToString:type] forKey:@"type"];
+    [event setValue:data forKey:@"data"];
+    NSMutableDictionary *result = [[NSMutableDictionary alloc]init];
+    [result setObject:event forKey:@"data"];
     if (messageCallback) {
-        messageCallback(event);
+        messageCallback(result);
     }
     if (responseCallback) {
         responseCallback(@{
