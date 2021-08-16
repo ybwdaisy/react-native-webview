@@ -9,6 +9,6 @@
 
 @interface RNCWebViewBridge : NSObject
 
-- (instancetype)bridgeForWebView:(id)webView callback:(void(^)(NSMutableDictionary *data))callback;
++ (instancetype)bridgeForWebView:(id)webView callback:(void(^)(NSMutableDictionary *data))callback;
 
 @end

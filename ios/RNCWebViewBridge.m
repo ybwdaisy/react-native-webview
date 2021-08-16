@@ -27,7 +27,7 @@ typedef enum {
 
 typedef void (^MessageCallback)(NSMutableDictionary *data);
 
-- (instancetype)bridgeForWebView:(id)webView callback:(MessageCallback)callback {
++ (instancetype)bridgeForWebView:(id)webView callback:(MessageCallback)callback {
     WebViewJavascriptBridge *bridge = [WebViewJavascriptBridge bridgeForWebView:webView];
     // 获取登录token
     [bridge registerHandler:@"getToken" handler:^(id data, WVJBResponseCallback responseCallback) {
@@ -177,7 +177,7 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
     return bridge;
 }
 
-- (void)getStorageByKey:(NSString *)key callback:(void(^)(NSDictionary *data))callback {
++ (void)getStorageByKey:(NSString *)key callback:(void(^)(NSDictionary *data))callback {
     RNCAsyncStorage *storage = [[RNCAsyncStorage alloc] init];
     dispatch_sync(storage.methodQueue, ^{
         [storage multiGet:@[@"persist:primary"] callback:^(NSArray *response) {
@@ -192,7 +192,7 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
     });
 }
 
-- (void)handleMessage:(NSString*)name widthData:(id)data andType:(MessageType)type messageCallback:(MessageCallback)messageCallback responseCallback:(WVJBResponseCallback)responseCallback {
++ (void)handleMessage:(NSString*)name widthData:(id)data andType:(MessageType)type messageCallback:(MessageCallback)messageCallback responseCallback:(WVJBResponseCallback)responseCallback {
     NSMutableDictionary *event = [[NSMutableDictionary alloc]init];
     [event setValue:[self convertToString:type] forKey:@"type"];
     [event setValue:data forKey:@"data"];
@@ -210,7 +210,7 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
     }
 }
 
-- (NSString *)convertToString:(MessageType) type {
++ (NSString *)convertToString:(MessageType) type {
     switch (type) {
         case MessageTypeOpen:
             return @"open";
