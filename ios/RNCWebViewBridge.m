@@ -8,7 +8,9 @@
 #import "RNCWebViewBridge.h"
 #import "RNCAsyncStorage.h"
 #import "WebViewJavascriptBridge.h"
+#import "RNCBridgeResponse.h"
 
+#define SHARE_CACHE_DIR @"shareCache"
 
 @implementation RNCWebViewBridge
 
@@ -149,6 +151,28 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
             responseCallback(responseData);
         }];
     }];
+    
+    // 将 Base64 格式图片保存至本地
+    [bridge registerHandler:@"saveBase64ImgToLocal" handler:^(id data, WVJBResponseCallback responseCallback) {
+        NSString *base64String = [data objectForKey:@"data"];
+        if (base64String != nil) {
+            NSURL *url = [NSURL URLWithString:base64String];
+            NSData *imageData = [NSData dataWithContentsOfURL:url];
+            UIImage *image = [UIImage imageWithData:imageData];
+            NSString *imagePath = [self saveImageToCacheUseImage:image];
+            RNCBridgeResponse *response = [[RNCBridgeResponse alloc]init];
+            if (![imagePath isEqualToString:@""]) {
+                [response setStatus:ResponseStatusSuccess];
+                [response setMsg:@"saveBase64ToLocal:ok"];
+                [response setData:@{@"imagePath": imagePath}];
+            } else {
+                [response setStatus:ResponseStatusFail];
+                [response setMsg:@"saveBase64ToLocal:fail"];
+                [response setData:@{}];
+            }
+            responseCallback([response getProperties]);
+        }
+    }];
 
     // 获取设备信息
     [bridge registerHandler:@"getDeviceInfo" handler:^(id data, WVJBResponseCallback responseCallback) {
@@ -167,11 +191,11 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
             }}];
         }
         [event addEntriesFromDictionary:@{@"version": [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"]}];
-        responseCallback(@{
-          @"status": @0,
-          @"msg": @"getDeviceInfo:ok",
-          @"data": event,
-        });
+        RNCBridgeResponse *response = [[RNCBridgeResponse alloc]init];
+        [response setStatus:ResponseStatusSuccess];
+        [response setMsg:@"getDeviceInfo:ok"];
+        [response setData:event];
+        responseCallback([response getProperties]);
     }];
     
     return bridge;
@@ -208,6 +232,25 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
             @"data": event,
         });
     }
+}
+
++ (NSString *)saveImageToCacheUseImage:(UIImage *)image {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *documentPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+    NSString *cachePath = [documentPath stringByAppendingPathComponent:SHARE_CACHE_DIR];
+    if (![fileManager fileExistsAtPath:cachePath]) {
+        [fileManager createDirectoryAtPath:cachePath withIntermediateDirectories:YES attributes:nil error:nil];
+    }
+    NSDate *currentDate = [NSDate dateWithTimeIntervalSinceNow:0];
+    NSTimeInterval currentTime = [currentDate timeIntervalSince1970] * 1000;
+    NSString *timeString = [NSString stringWithFormat:@"%.0f", currentTime];
+    NSString *imagePath = [NSString stringWithFormat:@"/share_image_%@.png", timeString];
+    NSString *imageAbsolutePath = [cachePath stringByAppendingPathComponent:imagePath];
+    BOOL result = [UIImagePNGRepresentation(image) writeToFile:imageAbsolutePath atomically:YES];
+    if (result) {
+        return imageAbsolutePath;
+    }
+    return @"";
 }
 
 + (NSString *)convertToString:(MessageType) type {
