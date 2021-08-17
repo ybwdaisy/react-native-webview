@@ -3,8 +3,12 @@ package com.reactnativecommunity.webview.jsbridge;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.os.Environment;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.view.Display;
 
@@ -19,6 +23,9 @@ import com.reactnativecommunity.webview.RNCWebView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -26,6 +33,12 @@ public class BridgeInterface {
 
 	private ThemedReactContext reactContext;
 	private RNCWebView webView;
+
+	private enum ResponseStatus {
+		ResponseStatusSuccess,
+		ResponseStatusCancel,
+		ResponseStatusFail,
+	}
 
 	private enum MessageType {
 		MessageTypeOpen,
@@ -52,7 +65,7 @@ public class BridgeInterface {
 			public void handler(String data, CallBackFunction function) {
 				JSONObject result = new JSONObject();
 				try {
-					result.put("status", 0);
+					result.put("status", convertResponseStatus(ResponseStatus.ResponseStatusSuccess));
 					result.put("msg", "getToken:ok");
 					result.put("data", getStorageByKey("token"));
 					function.onCallBack(result.toString());
@@ -67,7 +80,7 @@ public class BridgeInterface {
 			public void handler(String data, CallBackFunction function) {
 				JSONObject result = new JSONObject();
 				try {
-					result.put("status", 0);
+					result.put("status", convertResponseStatus(ResponseStatus.ResponseStatusSuccess));
 					result.put("msg", "getBoxInfo:ok");
 					result.put("data", getStorageByKey("box"));
 					function.onCallBack(result.toString());
@@ -93,7 +106,7 @@ public class BridgeInterface {
 					detail.put("height", getDisplay().get("height"));
 					detail.put("version", getVersionName());
 					detail.put("safeAreaInsets", safeAreaInsets);
-					result.put("status", 0);
+					result.put("status", convertResponseStatus(ResponseStatus.ResponseStatusSuccess));
 					result.put("msg", "getDeviceInfo:ok");
 					result.put("data", detail);
 					function.onCallBack(result.toString());
@@ -172,7 +185,48 @@ public class BridgeInterface {
 				handleMessage("shareToFeed", data, MessageType.MessageTypeShareFeed, function);
 			}
 		});
+		// 将 Base64 格式图片保存至本地
+		webView.registerHandler("saveBase64ImgToLocal", new BridgeHandler() {
+			@Override
+			public void handler(String data, CallBackFunction function) {
+				try {
+					String base64ImageString = new JSONObject(data).getString("data");
+					if (base64ImageString != null) {
+						byte[] decodedString = Base64.decode(base64ImageString, Base64.DEFAULT);
+						Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+						String fileName = "/genebox/share_image_" + System.currentTimeMillis() + ".png";
+						String imagePath = Environment.getExternalStorageDirectory() + fileName;
+						File file = Environment.getExternalStorageDirectory();
+						File f = new File(file, fileName);
+						try {
+							FileOutputStream fo = new FileOutputStream(f);
+							bitmap.compress(Bitmap.CompressFormat.PNG, 90, fo);
+							fo.flush();
+							fo.close();
+							JSONObject result = new JSONObject();
+							JSONObject path = new JSONObject();
+							path.put("imagePath", imagePath);
+							try {
+								result.put("status", convertResponseStatus(ResponseStatus.ResponseStatusSuccess));
+								result.put("msg", "saveBase64ImgToLocal:ok");
+								result.put("data", path);
+								function.onCallBack(result.toString());
+							} catch (JSONException e) {
+								e.printStackTrace();
+							}
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+
+					}
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+			}
+		});
 	}
+
+
 
 	private String getStorageByKey(String storageKey) {
 		String[] columns = {"key", "value"};
@@ -239,10 +293,10 @@ public class BridgeInterface {
 		JSONObject event = new JSONObject();
 		JSONObject result = new JSONObject();
 		try {
-			event.put("type", convertToString(messageType));
+			event.put("type", convertMessageType(messageType));
 			event.put("data", data);
 			webView.onMessage(event.toString());
-			result.put("status", 0);
+			result.put("status", convertResponseStatus(ResponseStatus.ResponseStatusSuccess));
 			result.put("msg", name + ":ok");
 			result.put("data", event);
 			callBackFunction.onCallBack(result.toString());
@@ -251,7 +305,18 @@ public class BridgeInterface {
 		}
 	}
 
-	private String convertToString(MessageType messageType) {
+	private int convertResponseStatus(ResponseStatus responseStatus) {
+		switch (responseStatus) {
+			case ResponseStatusSuccess:
+				return 0;
+			case ResponseStatusCancel:
+				return 1;
+			default:
+				return -1;
+		}
+	}
+
+	private String convertMessageType(MessageType messageType) {
 		switch (messageType) {
 			case MessageTypeOpen:
 				return "open";
