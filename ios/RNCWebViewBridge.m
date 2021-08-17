@@ -34,21 +34,21 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
     // 获取登录token
     [bridge registerHandler:@"getToken" handler:^(id data, WVJBResponseCallback responseCallback) {
         [self getStorageByKey:@"token" callback:^(NSDictionary * _Nonnull data) {
-            responseCallback(@{
-                @"status": @0,
-                @"msg": @"getToken:ok",
-                @"data": data,
-            });
+            RNCBridgeResponse *response = [[RNCBridgeResponse alloc]init];
+            [response setStatus:ResponseStatusSuccess];
+            [response setMsg:@"getToken:ok"];
+            [response setData:data];
+            responseCallback([response getProperties]);
         }];
     }];
     // 获取当前选中唾液盒
     [bridge registerHandler:@"getBoxInfo" handler:^(id data, WVJBResponseCallback responseCallback) {
         [self getStorageByKey:@"box" callback:^(NSDictionary * _Nonnull data) {
-            responseCallback(@{
-                @"status": @0,
-                @"msg": @"getBoxInfo:ok",
-                @"data": data,
-            });
+            RNCBridgeResponse *response = [[RNCBridgeResponse alloc]init];
+            [response setStatus:ResponseStatusSuccess];
+            [response setMsg:@"getBoxInfo:ok"];
+            [response setData:data];
+            responseCallback([response getProperties]);
         }];
     }];
     // 打开RN页面
@@ -226,11 +226,11 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
         messageCallback(result);
     }
     if (responseCallback) {
-        responseCallback(@{
-            @"status": @0,
-            @"msg": [name stringByAppendingString:@":ok"],
-            @"data": event,
-        });
+        RNCBridgeResponse *response = [[RNCBridgeResponse alloc]init];
+        [response setStatus:ResponseStatusSuccess];
+        [response setMsg:[name stringByAppendingString:@":ok"]];
+        [response setData:event];
+        responseCallback([response getProperties]);
     }
 }
 
