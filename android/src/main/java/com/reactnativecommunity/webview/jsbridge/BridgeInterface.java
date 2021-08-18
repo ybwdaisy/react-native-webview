@@ -191,8 +191,8 @@ public class BridgeInterface {
 			public void handler(String data, CallBackFunction function) {
 				try {
 					String base64ImageString = new JSONObject(data).getString("data");
-					base64ImageString = base64ImageString.replaceAll("data:image\\/\\w+;base64,", "");
 					if (base64ImageString != null) {
+						base64ImageString = base64ImageString.replaceAll("data:image\\/\\w+;base64,", "");
 						byte[] decodedString = Base64.decode(base64ImageString, Base64.DEFAULT);
 						Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
 						String fileName = "/genebox/share_image_" + System.currentTimeMillis() + ".png";
