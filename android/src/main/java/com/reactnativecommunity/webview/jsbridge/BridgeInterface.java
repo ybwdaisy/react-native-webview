@@ -51,6 +51,7 @@ public class BridgeInterface {
 		MessageTypeShareSession,
 		MessageTypeShareTimeline,
 		MessageTypeShareFeed,
+		MessageTypeLocalImagePath,
 	}
 
 	public BridgeInterface(ThemedReactContext reactContext, RNCWebView webView) {
@@ -200,13 +201,15 @@ public class BridgeInterface {
 						File file = Environment.getExternalStorageDirectory();
 						File f = new File(file, fileName);
 						try {
+							// 生成文件
 							FileOutputStream fo = new FileOutputStream(f);
 							bitmap.compress(Bitmap.CompressFormat.PNG, 90, fo);
 							fo.flush();
 							fo.close();
+							// 返回结果
 							JSONObject result = new JSONObject();
 							JSONObject path = new JSONObject();
-							path.put("imagePath", imagePath);
+							path.put("imagePath", "file://" + imagePath);
 							try {
 								result.put("status", convertResponseStatus(ResponseStatus.ResponseStatusSuccess));
 								result.put("msg", "saveBase64ImgToLocal:ok");
@@ -215,6 +218,10 @@ public class BridgeInterface {
 							} catch (JSONException e) {
 								e.printStackTrace();
 							}
+							JSONObject event = new JSONObject();
+							event.put("type", convertMessageType(MessageType.MessageTypeLocalImagePath));
+							event.put("data", path);
+							webView.onMessage(event.toString());
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
@@ -339,6 +346,8 @@ public class BridgeInterface {
 				return "shareTimeline";
 			case MessageTypeShareFeed:
 				return "shareFeed";
+			case MessageTypeLocalImagePath:
+				return "localImagePath";
 			default:
 				return "";
 		}

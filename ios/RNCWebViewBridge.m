@@ -24,7 +24,8 @@ typedef enum {
     MessageTypeFeedShareData,
     MessageTypeShareSession,
     MessageTypeShareTimeline,
-    MessageTypeShareFeed
+    MessageTypeShareFeed,
+    MessageTypeLocalImagePath,
 } MessageType;
 
 typedef void (^MessageCallback)(NSMutableDictionary *data);
@@ -170,7 +171,13 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
                 [response setMsg:@"saveBase64ToLocal:fail"];
                 [response setData:@{}];
             }
-            responseCallback([response getProperties]);
+            NSMutableDictionary *res = [response getProperties];
+            responseCallback(res);
+            
+            NSMutableDictionary *result = [self createEventData:MessageTypeLocalImagePath withData:@{@"imagePath": imagePath}];
+            if (callback) {
+                callback(result);
+            }
         }
     }];
 
@@ -216,12 +223,17 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
     });
 }
 
-+ (void)handleMessage:(NSString*)name widthData:(id)data andType:(MessageType)type messageCallback:(MessageCallback)messageCallback responseCallback:(WVJBResponseCallback)responseCallback {
-    NSMutableDictionary *event = [[NSMutableDictionary alloc]init];
-    [event setValue:[self convertToString:type] forKey:@"type"];
-    [event setValue:data forKey:@"data"];
++ (NSMutableDictionary *)createEventData:(MessageType)type withData:(id)data {
     NSMutableDictionary *result = [[NSMutableDictionary alloc]init];
+    NSMutableDictionary *event = [[NSMutableDictionary alloc]init];
+    [event setValue:[self convertMessageType:type] forKey:@"type"];
+    [event setValue:data forKey:@"data"];
     [result setObject:event forKey:@"data"];
+    return result;
+}
+
++ (void)handleMessage:(NSString*)name widthData:(id)data andType:(MessageType)type messageCallback:(MessageCallback)messageCallback responseCallback:(WVJBResponseCallback)responseCallback {
+    NSMutableDictionary *result = [self createEventData:type withData:data];
     if (messageCallback) {
         messageCallback(result);
     }
@@ -229,7 +241,7 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
         RNCBridgeResponse *response = [[RNCBridgeResponse alloc]init];
         [response setStatus:ResponseStatusSuccess];
         [response setMsg:[name stringByAppendingString:@":ok"]];
-        [response setData:event];
+        [response setData:data];
         responseCallback([response getProperties]);
     }
 }
@@ -253,7 +265,7 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
     return @"";
 }
 
-+ (NSString *)convertToString:(MessageType) type {
++ (NSString *)convertMessageType:(MessageType) type {
     switch (type) {
         case MessageTypeOpen:
             return @"open";
@@ -275,6 +287,8 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
             return @"shareTimeline";
         case MessageTypeShareFeed:
             return @"shareFeed";
+        case MessageTypeLocalImagePath:
+            return @"localImagePath";
         default:
             return @"";
     }
