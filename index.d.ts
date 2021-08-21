@@ -30,7 +30,7 @@ declare class WebView extends Component<WebViewProps> {
     /**
      * Call WebView Bridge registerHandler
      */
-    callJavaScriptBridgeHandler: (handleName: string) => void
+    callJavaScriptBridgeHandler: (handlerName: string) => void
 
     /**
      * Extra Native Component Config.
