@@ -23,8 +23,12 @@ import com.facebook.react.views.scroll.ScrollEventType;
 import com.reactnativecommunity.webview.events.TopMessageEvent;
 import com.reactnativecommunity.webview.jsbridge.BridgeHandler;
 import com.reactnativecommunity.webview.jsbridge.BridgeHelper;
+import com.reactnativecommunity.webview.jsbridge.BridgeInterface;
 import com.reactnativecommunity.webview.jsbridge.CallBackFunction;
 import com.reactnativecommunity.webview.jsbridge.WebViewJavascriptBridge;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -174,6 +178,25 @@ public class RNCWebView extends WebView implements LifecycleEventListener, WebVi
 				!TextUtils.isEmpty(injectedJS)) {
 			evaluateJavascriptWithFallback("(function() {\n" + injectedJS + ";\n})();");
 		}
+	}
+
+	public void callJavaScriptBridgeHandler(String handlerName, BridgeInterface bridgeInterface) {
+		this.callHandler(handlerName, null, new CallBackFunction() {
+			@Override
+			public void onCallBack(String data) {
+				String imagePath = bridgeInterface.saveBase64ImgToLocal(data);
+				JSONObject path = new JSONObject();
+				try {
+					path.put("imagePath", imagePath);
+					JSONObject event = new JSONObject();
+					event.put("type", bridgeInterface.convertMessageType(BridgeInterface.MessageType.MessageTypeLocalImagePath));
+					event.put("data", path);
+ 					onMessage(event.toString());
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 
 	public void onMessage(String message) {

@@ -40,7 +40,7 @@ public class BridgeInterface {
 		ResponseStatusFail,
 	}
 
-	private enum MessageType {
+	public enum MessageType {
 		MessageTypeOpen,
 		MessageTypeClose,
 		MessageTypeNavConfig,
@@ -192,46 +192,68 @@ public class BridgeInterface {
 			public void handler(String data, CallBackFunction function) {
 				try {
 					String base64ImageString = new JSONObject(data).getString("data");
-					if (base64ImageString != null) {
-						base64ImageString = base64ImageString.replaceAll("data:image\\/\\w+;base64,", "");
-						byte[] decodedString = Base64.decode(base64ImageString, Base64.DEFAULT);
-						Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-						String fileName = "/genebox/share_image_" + System.currentTimeMillis() + ".png";
-						String imagePath = Environment.getExternalStorageDirectory() + fileName;
-						File file = Environment.getExternalStorageDirectory();
-						File f = new File(file, fileName);
-						try {
-							// 生成文件
-							FileOutputStream fo = new FileOutputStream(f);
-							bitmap.compress(Bitmap.CompressFormat.PNG, 90, fo);
-							fo.flush();
-							fo.close();
-							// 返回结果
-							JSONObject result = new JSONObject();
-							JSONObject path = new JSONObject();
-							path.put("imagePath", "file://" + imagePath);
-							try {
-								result.put("status", convertResponseStatus(ResponseStatus.ResponseStatusSuccess));
-								result.put("msg", "saveBase64ImgToLocal:ok");
-								result.put("data", path);
-								function.onCallBack(result.toString());
-							} catch (JSONException e) {
-								e.printStackTrace();
-							}
-							JSONObject event = new JSONObject();
-							event.put("type", convertMessageType(MessageType.MessageTypeLocalImagePath));
-							event.put("data", path);
-							webView.onMessage(event.toString());
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-
+					String imagePath = saveBase64ImgToLocal(base64ImageString);
+					ResponseStatus responseStatus = ResponseStatus.ResponseStatusFail;
+					if (imagePath.startsWith("file")) {
+						responseStatus = ResponseStatus.ResponseStatusSuccess;
 					}
+					saveLocalImageResult(imagePath, responseStatus, function);
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
+
 			}
 		});
+	}
+
+	public String saveBase64ImgToLocal(String base64ImageString) {
+		String imageString = base64ImageString;
+		if (imageString != null) {
+			imageString = imageString.replaceAll("data:image\\/\\w+;base64,", "");
+			byte[] decodedString = Base64.decode(imageString, Base64.DEFAULT);
+			Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+			String dir = Environment.getExternalStorageDirectory() + "/genebox/";
+			File fileDir = new File(dir);
+			if(!fileDir.exists()) {
+				fileDir.mkdir();
+			}
+			String fileName = "share_image_" + System.currentTimeMillis() + ".png";
+			String imagePath = dir + fileName;
+			try {
+				// 生成文件
+				File f = new File(imagePath);
+				f.createNewFile();
+				FileOutputStream fo = new FileOutputStream(f);
+				bitmap.compress(Bitmap.CompressFormat.PNG, 90, fo);
+				fo.flush();
+				fo.close();
+				return "file://" + imagePath;
+			} catch (IOException e) {
+				e.printStackTrace();
+				return "";
+			}
+		}
+		return "";
+	}
+
+	private void saveLocalImageResult(String imagePath, ResponseStatus responseStatus, CallBackFunction function) {
+		JSONObject result = new JSONObject();
+		JSONObject path = new JSONObject();
+		String msg = "saveBase64ImgToLocal:" + (responseStatus == ResponseStatus.ResponseStatusSuccess ? "ok" : "fail");
+		try {
+			path.put("imagePath", imagePath);
+			result.put("status", convertResponseStatus(responseStatus));
+			result.put("msg", msg);
+			result.put("data", path);
+			function.onCallBack(result.toString());
+			JSONObject event = new JSONObject();
+			event.put("type", convertMessageType(MessageType.MessageTypeLocalImagePath));
+			event.put("data", path);
+			webView.onMessage(event.toString());
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 
@@ -319,12 +341,13 @@ public class BridgeInterface {
 				return 0;
 			case ResponseStatusCancel:
 				return 1;
-			default:
+			case ResponseStatusFail:
 				return -1;
 		}
+		return 0;
 	}
 
-	private String convertMessageType(MessageType messageType) {
+	public String convertMessageType(MessageType messageType) {
 		switch (messageType) {
 			case MessageTypeOpen:
 				return "open";
