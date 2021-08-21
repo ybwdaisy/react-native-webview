@@ -14,20 +14,6 @@
 
 @implementation RNCWebViewBridge
 
-typedef enum {
-    MessageTypeOpen,
-    MessageTypeClose,
-    MessageTypeNavConfig,
-    MessageTypeShareData,
-    MessageTypeSessionShareData,
-    MessageTypeTimelineShareData,
-    MessageTypeFeedShareData,
-    MessageTypeShareSession,
-    MessageTypeShareTimeline,
-    MessageTypeShareFeed,
-    MessageTypeLocalImagePath,
-} MessageType;
-
 typedef void (^MessageCallback)(NSMutableDictionary *data);
 
 + (instancetype)bridgeForWebView:(id)webView callback:(MessageCallback)callback {
@@ -156,28 +142,27 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
     // 将 Base64 格式图片保存至本地
     [bridge registerHandler:@"saveBase64ImgToLocal" handler:^(id data, WVJBResponseCallback responseCallback) {
         NSString *base64String = [data objectForKey:@"data"];
-        if (base64String != nil) {
-            NSURL *url = [NSURL URLWithString:base64String];
-            NSData *imageData = [NSData dataWithContentsOfURL:url];
-            UIImage *image = [UIImage imageWithData:imageData];
-            NSString *imagePath = [self saveImageToCacheUseImage:image];
-            RNCBridgeResponse *response = [[RNCBridgeResponse alloc]init];
-            if (![imagePath isEqualToString:@""]) {
-                [response setStatus:ResponseStatusSuccess];
-                [response setMsg:@"saveBase64ToLocal:ok"];
-                [response setData:@{@"imagePath": imagePath}];
-            } else {
-                [response setStatus:ResponseStatusFail];
-                [response setMsg:@"saveBase64ToLocal:fail"];
-                [response setData:@{}];
-            }
-            NSMutableDictionary *res = [response getProperties];
-            responseCallback(res);
-            
-            NSMutableDictionary *result = [self createEventData:MessageTypeLocalImagePath withData:@{@"imagePath": imagePath}];
-            if (callback) {
-                callback(result);
-            }
+        NSString *imagePath = [self saveBase64ImgToLocal:base64String];
+        RNCBridgeResponse *response = [[RNCBridgeResponse alloc]init];
+        
+        NSMutableDictionary *responseData = [[NSMutableDictionary alloc]init];
+        [responseData setValue:imagePath forKey:@"imagePath"];
+        
+        if (![imagePath isEqualToString:@""]) {
+            [response setStatus:ResponseStatusSuccess];
+            [response setMsg:@"saveBase64ToLocal:ok"];
+            [response setData:responseData];
+        } else {
+            [response setStatus:ResponseStatusFail];
+            [response setMsg:@"saveBase64ToLocal:fail"];
+            [response setData:responseData];
+        }
+        NSMutableDictionary *res = [response getProperties];
+        responseCallback(res);
+        
+        NSMutableDictionary *result = [self createEventData:MessageTypeLocalImagePath withData:responseData];
+        if (callback) {
+            callback(result);
         }
     }];
 
@@ -206,6 +191,17 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
     }];
     
     return bridge;
+}
+
++ (NSString *)saveBase64ImgToLocal:(NSString *)base64String {
+    if (base64String != nil) {
+        NSURL *url = [NSURL URLWithString:base64String];
+        NSData *imageData = [NSData dataWithContentsOfURL:url];
+        UIImage *image = [UIImage imageWithData:imageData];
+        NSString *imagePath = [self saveImageToCacheUseImage:image];
+        return imagePath;
+    }
+    return @"";
 }
 
 + (void)getStorageByKey:(NSString *)key callback:(void(^)(NSDictionary *data))callback {

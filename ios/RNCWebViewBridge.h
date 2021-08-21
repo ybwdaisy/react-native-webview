@@ -7,8 +7,26 @@
 
 #import <Foundation/Foundation.h>
 
+typedef enum {
+    MessageTypeOpen,
+    MessageTypeClose,
+    MessageTypeNavConfig,
+    MessageTypeShareData,
+    MessageTypeSessionShareData,
+    MessageTypeTimelineShareData,
+    MessageTypeFeedShareData,
+    MessageTypeShareSession,
+    MessageTypeShareTimeline,
+    MessageTypeShareFeed,
+    MessageTypeLocalImagePath,
+} MessageType;
+
 @interface RNCWebViewBridge : NSObject
 
 + (instancetype)bridgeForWebView:(id)webView callback:(void(^)(NSMutableDictionary *data))callback;
+
++ (NSString *)saveBase64ImgToLocal:(NSString *)base64String;
+
++ (NSMutableDictionary *)createEventData:(MessageType)type withData:(id)data;
 
 @end

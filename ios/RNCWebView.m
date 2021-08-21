@@ -1089,6 +1089,15 @@ static NSDictionary* customCertificatesForHost;
   [_webView stopLoading];
 }
 
+- (void)callJavaScriptBridgeHandler:(NSString *)handlerName
+{
+    [self.bridge callHandler:handlerName data:nil responseCallback:^(id responseData) {
+        NSString *imagePath = [RNCWebViewBridge saveBase64ImgToLocal: responseData];
+        NSMutableDictionary *result = [RNCWebViewBridge createEventData:MessageTypeLocalImagePath withData:@{@"imagePath": imagePath}];
+        self->_onMessage(result);
+    }];
+}
+
 #if !TARGET_OS_OSX
 - (void)setBounces:(BOOL)bounces
 {
