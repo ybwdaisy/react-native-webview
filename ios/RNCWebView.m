@@ -1094,7 +1094,9 @@ static NSDictionary* customCertificatesForHost;
     [self.bridge callHandler:handlerName data:nil responseCallback:^(id responseData) {
         // 区分不同 hanlderName 处理不同逻辑
         NSMutableDictionary *result = [RNCWebViewBridge handleCallJavaScriptMethod:handlerName data:responseData];
-        self->_onMessage(result);
+        if (result != nil) {
+            self->_onMessage(result);
+        }
     }];
 }
 
