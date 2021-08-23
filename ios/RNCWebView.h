@@ -69,6 +69,6 @@
 - (void)goBack;
 - (void)reload;
 - (void)stopLoading;
-- (void)callJavaScriptBridgeHandler:(NSString *)handlerName;
+- (void)callJavaScriptBridgeHandler:(NSString *_Nonnull)handlerName;
 
 @end

@@ -15,7 +15,6 @@
 #import <React/RCTUIKit.h>
 #endif // !TARGET_OS_OSX
 #import "WebViewJavascriptBridge.h"
-#import "RNCWebViewBridge.h"
 
 #import "objc/runtime.h"
 
@@ -1092,8 +1091,8 @@ static NSDictionary* customCertificatesForHost;
 - (void)callJavaScriptBridgeHandler:(NSString *)handlerName
 {
     [self.bridge callHandler:handlerName data:nil responseCallback:^(id responseData) {
-        NSString *imagePath = [RNCWebViewBridge saveBase64ImgToLocal: responseData];
-        NSMutableDictionary *result = [RNCWebViewBridge createEventData:MessageTypeLocalImagePath withData:@{@"imagePath": imagePath}];
+        // 区分不同 hanlderName 处理不同逻辑
+        NSMutableDictionary *result = [RNCWebViewBridge handleCallJavaScriptMethod:handlerName data:responseData];
         self->_onMessage(result);
     }];
 }

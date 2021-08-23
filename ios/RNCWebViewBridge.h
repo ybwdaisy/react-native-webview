@@ -25,8 +25,6 @@ typedef enum {
 
 + (instancetype)bridgeForWebView:(id)webView callback:(void(^)(NSMutableDictionary *data))callback;
 
-+ (NSString *)saveBase64ImgToLocal:(NSString *)base64String;
-
-+ (NSMutableDictionary *)createEventData:(MessageType)type withData:(id)data;
++ (NSMutableDictionary *)handleCallJavaScriptMethod:(NSString *)handlerName data:(id)data;
 
 @end

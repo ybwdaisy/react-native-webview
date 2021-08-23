@@ -193,6 +193,16 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
     return bridge;
 }
 
++ (NSMutableDictionary *)handleCallJavaScriptMethod:(NSString *)handlerName data:(id)data {
+    if ([handlerName isEqualToString:@"saveBase64ImgToLocal"]) {
+        NSString *imagePath = [self saveBase64ImgToLocal: data];
+        NSMutableDictionary *result = [self createEventData:MessageTypeLocalImagePath withData:@{@"imagePath": imagePath}];
+        return result;
+    }
+    // TODO
+    return nil;
+}
+
 + (NSString *)saveBase64ImgToLocal:(NSString *)base64String {
     if (base64String != nil) {
         NSURL *url = [NSURL URLWithString:base64String];
