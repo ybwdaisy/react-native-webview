@@ -184,16 +184,10 @@ public class RNCWebView extends WebView implements LifecycleEventListener, WebVi
 		this.callHandler(handlerName, null, new CallBackFunction() {
 			@Override
 			public void onCallBack(String data) {
-				String imagePath = bridgeInterface.saveBase64ImgToLocal(data);
-				JSONObject path = new JSONObject();
-				try {
-					path.put("imagePath", imagePath);
-					JSONObject event = new JSONObject();
-					event.put("type", bridgeInterface.convertMessageType(BridgeInterface.MessageType.MessageTypeLocalImagePath));
-					event.put("data", path);
- 					onMessage(event.toString());
-				} catch (JSONException e) {
-					e.printStackTrace();
+				// 区分不同 hanlderName 处理不同逻辑
+				JSONObject message = bridgeInterface.handleCallJavaScriptMethod(handlerName, data);
+				if (message != null) {
+					onMessage(message.toString());
 				}
 			}
 		});

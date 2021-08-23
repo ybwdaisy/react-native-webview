@@ -64,30 +64,24 @@ public class BridgeInterface {
 		webView.registerHandler("getToken", new BridgeHandler() {
 			@Override
 			public void handler(String data, CallBackFunction function) {
-				JSONObject result = new JSONObject();
-				try {
-					result.put("status", convertResponseStatus(ResponseStatus.ResponseStatusSuccess));
-					result.put("msg", "getToken:ok");
-					result.put("data", getStorageByKey("token"));
-					function.onCallBack(result.toString());
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
+				JSONObject result = createResultObject(
+						ResponseStatus.ResponseStatusSuccess,
+						"getToken:ok",
+						getStorageByKey("token")
+				);
+				function.onCallBack(result.toString());
 			}
 		});
 		// 获取唾液盒信息
 		webView.registerHandler("getBoxInfo", new BridgeHandler() {
 			@Override
 			public void handler(String data, CallBackFunction function) {
-				JSONObject result = new JSONObject();
-				try {
-					result.put("status", convertResponseStatus(ResponseStatus.ResponseStatusSuccess));
-					result.put("msg", "getBoxInfo:ok");
-					result.put("data", getStorageByKey("box"));
-					function.onCallBack(result.toString());
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
+				JSONObject result = createResultObject(
+						ResponseStatus.ResponseStatusSuccess,
+						"getBoxInfo:ok",
+						getStorageByKey("box")
+				);
+				function.onCallBack(result.toString());
 
 			}
 		});
@@ -95,21 +89,22 @@ public class BridgeInterface {
 		webView.registerHandler("getDeviceInfo", new BridgeHandler() {
 			@Override
 			public void handler(String data, CallBackFunction function) {
-				JSONObject result = new JSONObject();
-				JSONObject detail = new JSONObject();
 				JSONObject safeAreaInsets = new JSONObject();
 				try {
 					safeAreaInsets.put("top", getStatusBarHeight());
 					safeAreaInsets.put("right", 0);
 					safeAreaInsets.put("bottom", 0);
 					safeAreaInsets.put("left", 0);
+					JSONObject detail = new JSONObject();
 					detail.put("width", getDisplay().get("width"));
 					detail.put("height", getDisplay().get("height"));
 					detail.put("version", getVersionName());
 					detail.put("safeAreaInsets", safeAreaInsets);
-					result.put("status", convertResponseStatus(ResponseStatus.ResponseStatusSuccess));
-					result.put("msg", "getDeviceInfo:ok");
-					result.put("data", detail);
+					JSONObject result = createResultObject(
+							ResponseStatus.ResponseStatusSuccess,
+							"getDeviceInfo:ok",
+							detail
+					);
 					function.onCallBack(result.toString());
 				} catch (JSONException e) {
 					e.printStackTrace();
@@ -197,7 +192,19 @@ public class BridgeInterface {
 					if (imagePath.startsWith("file")) {
 						responseStatus = ResponseStatus.ResponseStatusSuccess;
 					}
-					saveLocalImageResult(imagePath, responseStatus, function);
+					// 发送事件消息给 RN 端
+					JSONObject pathObject = new JSONObject();
+					pathObject.put("imagePath", imagePath);
+					JSONObject event = createEventObject(MessageType.MessageTypeLocalImagePath, pathObject);
+					webView.onMessage(event.toString());
+					// 执行回调函数
+					String msg = "saveBase64ImgToLocal:" + (responseStatus == ResponseStatus.ResponseStatusSuccess ? "ok" : "fail");
+					JSONObject result = createResultObject(
+							ResponseStatus.ResponseStatusSuccess,
+							msg,
+							pathObject
+					);
+					function.onCallBack(result.toString());
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
@@ -206,7 +213,22 @@ public class BridgeInterface {
 		});
 	}
 
-	public String saveBase64ImgToLocal(String base64ImageString) {
+	public JSONObject handleCallJavaScriptMethod(String handlerName, String data) {
+		if (handlerName.equals("saveBase64ImgToLocal")) {
+			String imagePath = saveBase64ImgToLocal(data);
+			JSONObject pathObject = new JSONObject();
+			try {
+				pathObject.put("imagePath", imagePath);
+				JSONObject event = createEventObject(MessageType.MessageTypeLocalImagePath, pathObject);
+				return event;
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+
+	private String saveBase64ImgToLocal(String base64ImageString) {
 		String imageString = base64ImageString;
 		if (imageString != null) {
 			imageString = imageString.replaceAll("data:image\\/\\w+;base64,", "");
@@ -236,27 +258,28 @@ public class BridgeInterface {
 		return "";
 	}
 
-	private void saveLocalImageResult(String imagePath, ResponseStatus responseStatus, CallBackFunction function) {
+	private JSONObject createResultObject(ResponseStatus responseStatus, String msg, Object data) {
 		JSONObject result = new JSONObject();
-		JSONObject path = new JSONObject();
-		String msg = "saveBase64ImgToLocal:" + (responseStatus == ResponseStatus.ResponseStatusSuccess ? "ok" : "fail");
 		try {
-			path.put("imagePath", imagePath);
 			result.put("status", convertResponseStatus(responseStatus));
 			result.put("msg", msg);
-			result.put("data", path);
-			function.onCallBack(result.toString());
-			JSONObject event = new JSONObject();
-			event.put("type", convertMessageType(MessageType.MessageTypeLocalImagePath));
-			event.put("data", path);
-			webView.onMessage(event.toString());
+			result.put("data", data);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-
+		return result;
 	}
 
-
+	private JSONObject createEventObject(MessageType messageType, Object data) {
+		JSONObject event = new JSONObject();
+		try {
+			event.put("type", convertMessageType(messageType));
+			event.put("data", data);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		return event;
+	}
 
 	private String getStorageByKey(String storageKey) {
 		String[] columns = {"key", "value"};
@@ -320,19 +343,10 @@ public class BridgeInterface {
 	}
 
 	private void handleMessage(String name, String data, MessageType messageType, CallBackFunction callBackFunction) {
-		JSONObject event = new JSONObject();
-		JSONObject result = new JSONObject();
-		try {
-			event.put("type", convertMessageType(messageType));
-			event.put("data", data);
-			webView.onMessage(event.toString());
-			result.put("status", convertResponseStatus(ResponseStatus.ResponseStatusSuccess));
-			result.put("msg", name + ":ok");
-			result.put("data", event);
-			callBackFunction.onCallBack(result.toString());
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
+		JSONObject event = createEventObject(messageType, data);
+		webView.onMessage(event.toString());
+		JSONObject result = createResultObject(ResponseStatus.ResponseStatusSuccess, name + ":ok", event);
+		callBackFunction.onCallBack(result.toString());
 	}
 
 	private int convertResponseStatus(ResponseStatus responseStatus) {
