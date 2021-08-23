@@ -15,6 +15,7 @@
 #import <React/RCTUIKit.h>
 #endif // !TARGET_OS_OSX
 #import "WebViewJavascriptBridge.h"
+#import "RNCWebViewBridge.h"
 
 #import "objc/runtime.h"
 
