@@ -64,7 +64,7 @@ static NSDictionary* customCertificatesForHost;
 @end
 #endif // TARGET_OS_OSX
 
-@interface RNCWebView () <WKUIDelegate, WKNavigationDelegate, WKScriptMessageHandler,
+@interface RNCWebView () <WKUIDelegate, WKNavigationDelegate, WKScriptMessageHandler, UIWebViewDelegate,
 #if !TARGET_OS_OSX
     UIScrollViewDelegate,
 #endif // !TARGET_OS_OSX
@@ -285,6 +285,7 @@ static NSDictionary* customCertificatesForHost;
             self->_onMessage(data);
         }
     }];
+    [self.bridge setWebViewDelegate:self];
   }
 }
 
