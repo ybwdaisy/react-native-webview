@@ -64,11 +64,21 @@ public class BridgeInterface {
 		webView.registerHandler("getToken", new BridgeHandler() {
 			@Override
 			public void handler(String data, CallBackFunction function) {
-				JSONObject result = createResultObject(
-						ResponseStatus.ResponseStatusSuccess,
-						"getToken:ok",
-						getStorageByKey("token")
-				);
+				Object token = getStorageByKey("token");
+				JSONObject result;
+				if (token != null) {
+					result = createResultObject(
+							ResponseStatus.ResponseStatusSuccess,
+							"getToken:ok",
+							token
+					);
+				} else {
+					result = createResultObject(
+							ResponseStatus.ResponseStatusFail,
+							"getToken:fail",
+							null
+					);
+				}
 				function.onCallBack(result.toString());
 			}
 		});
@@ -76,11 +86,22 @@ public class BridgeInterface {
 		webView.registerHandler("getBoxInfo", new BridgeHandler() {
 			@Override
 			public void handler(String data, CallBackFunction function) {
-				JSONObject result = createResultObject(
-						ResponseStatus.ResponseStatusSuccess,
-						"getBoxInfo:ok",
-						getStorageByKey("box")
-				);
+				Object box = getStorageByKey("box");
+				JSONObject result;
+				if (box != null) {
+					result = createResultObject(
+							ResponseStatus.ResponseStatusSuccess,
+							"getBoxInfo:ok",
+							box
+					);
+				} else {
+					result = createResultObject(
+							ResponseStatus.ResponseStatusFail,
+							"getBoxInfo:fail",
+							null
+					);
+				}
+
 				function.onCallBack(result.toString());
 
 			}
@@ -281,7 +302,7 @@ public class BridgeInterface {
 		return event;
 	}
 
-	private String getStorageByKey(String storageKey) {
+	private Object getStorageByKey(String storageKey) {
 		String[] columns = {"key", "value"};
 		String[] keys = {"persist:primary"};
 
@@ -318,7 +339,7 @@ public class BridgeInterface {
 				}
 			} catch (Exception e) {
 				FLog.w(ReactConstants.TAG, e.getMessage(), e);
-				return "";
+				return null;
 			} finally {
 				cursor.close();
 			}
@@ -335,11 +356,13 @@ public class BridgeInterface {
 		String jsonToken = result.getArray(0).getString(1);
 		try {
 			JSONObject jsonObject = new JSONObject(jsonToken);
-			return jsonObject.get(storageKey).toString();
+			String targetJsonString = String.valueOf(jsonObject.get(storageKey));
+			JSONObject storageObject = new JSONObject(targetJsonString);
+			return storageObject;
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		return "";
+		return null;
 	}
 
 	private void handleMessage(String name, String data, MessageType messageType, CallBackFunction callBackFunction) {

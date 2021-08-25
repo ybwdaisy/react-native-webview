@@ -20,7 +20,7 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
     WebViewJavascriptBridge *bridge = [WebViewJavascriptBridge bridgeForWebView:webView];
     // 获取登录token
     [bridge registerHandler:@"getToken" handler:^(id data, WVJBResponseCallback responseCallback) {
-        [self getStorageByKey:@"token" callback:^(NSDictionary * _Nonnull data) {
+        [self getStorageByKey:@"token" callback:^(NSDictionary *data) {
             RNCBridgeResponse *response = [[RNCBridgeResponse alloc]init];
             [response setStatus:ResponseStatusSuccess];
             [response setMsg:@"getToken:ok"];
@@ -30,7 +30,7 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
     }];
     // 获取当前选中唾液盒
     [bridge registerHandler:@"getBoxInfo" handler:^(id data, WVJBResponseCallback responseCallback) {
-        [self getStorageByKey:@"box" callback:^(NSDictionary * _Nonnull data) {
+        [self getStorageByKey:@"box" callback:^(NSDictionary *data) {
             RNCBridgeResponse *response = [[RNCBridgeResponse alloc]init];
             [response setStatus:ResponseStatusSuccess];
             [response setMsg:@"getBoxInfo:ok"];
@@ -221,9 +221,16 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
             if (response[0] == NSNull.null && [response[1] isKindOfClass:NSArray.class] && [response[1][0] isKindOfClass:NSArray.class]) {
                 NSData *jsonData = [response[1][0][1] dataUsingEncoding:NSUTF8StringEncoding];
                 NSDictionary *parsedData = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:nil];
-                callback([parsedData objectForKey:key]);
+                NSString *targetJsonString = [parsedData objectForKey:key];
+                if (targetJsonString != nil) {
+                    NSData *targetData = [targetJsonString dataUsingEncoding:NSUTF8StringEncoding];
+                    NSDictionary *targetParsedData = [NSJSONSerialization JSONObjectWithData:targetData options:kNilOptions error:nil];
+                    callback(targetParsedData);
+                } else {
+                    callback(nil);
+                }
             } else {
-                callback(@{});
+                callback(nil);
             }
         }];
     });
