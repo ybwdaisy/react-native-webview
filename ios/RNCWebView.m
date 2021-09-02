@@ -1090,9 +1090,9 @@ static NSDictionary* customCertificatesForHost;
   [_webView stopLoading];
 }
 
-- (void)callJavaScriptBridgeHandler:(NSString *)handlerName
+- (void)callJavaScriptBridgeHandler:(NSString *_Nonnull)handlerName data:(id)data
 {
-    [self.bridge callHandler:handlerName data:nil responseCallback:^(id responseData) {
+    [self.bridge callHandler:handlerName data:data responseCallback:^(id responseData) {
         // 区分不同 hanlderName 处理不同逻辑
         NSMutableDictionary *result = [RNCWebViewBridge handleCallJavaScriptMethod:handlerName data:responseData];
         if (result != nil) {

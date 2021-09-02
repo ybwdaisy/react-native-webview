@@ -26,6 +26,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -202,50 +203,56 @@ public class BridgeInterface {
 				handleMessage("shareToFeed", data, MessageType.MessageTypeShareFeed, function);
 			}
 		});
-		// 将 Base64 格式图片保存至本地
-		webView.registerHandler("saveBase64ImgToLocal", new BridgeHandler() {
+		// 分片上传 Base64 图片
+		webView.registerHandler("uploadBase64Image", new BridgeHandler() {
+			final ArrayList base64Array = new ArrayList<JSONObject>();
 			@Override
 			public void handler(String data, CallBackFunction function) {
 				try {
-					String base64ImageString = new JSONObject(data).getString("data");
-					String imagePath = saveBase64ImgToLocal(base64ImageString);
-					ResponseStatus responseStatus = ResponseStatus.ResponseStatusFail;
-					if (imagePath.startsWith("file")) {
-						responseStatus = ResponseStatus.ResponseStatusSuccess;
+					JSONObject params = new JSONObject(data);
+					Integer totalCount = params.getInt("length");
+					Integer arrayCount = base64Array.size();
+					if (arrayCount < totalCount - 1) {
+						base64Array.add(params);
+						JSONObject result = createResultObject(
+								ResponseStatus.ResponseStatusSuccess,
+								"getDeviceInfo:ok",
+								null
+						);
+						function.onCallBack(result.toString());
+						return;
 					}
-					// 发送事件消息给 RN 端
+					base64Array.add(params);
+					JSONObject result = createResultObject(
+							ResponseStatus.ResponseStatusSuccess,
+							"getDeviceInfo:ok",
+							null
+					);
+					function.onCallBack(result.toString());
+
+					String base64ImageString = "";
+					for(int i = 0; i < base64Array.size() ; i ++){
+						JSONObject item = (JSONObject) base64Array.get(i);
+						base64ImageString += item.getString("fragment");
+					}
+
+					String imagePath = saveBase64ImgToLocal(base64ImageString);
 					JSONObject pathObject = new JSONObject();
 					pathObject.put("imagePath", imagePath);
 					JSONObject event = createEventObject(MessageType.MessageTypeLocalImagePath, pathObject);
 					webView.onMessage(event.toString());
-					// 执行回调函数
-					String msg = "saveBase64ImgToLocal:" + (responseStatus == ResponseStatus.ResponseStatusSuccess ? "ok" : "fail");
-					JSONObject result = createResultObject(
-							ResponseStatus.ResponseStatusSuccess,
-							msg,
-							pathObject
-					);
-					function.onCallBack(result.toString());
+					base64Array.clear();
+
 				} catch (JSONException e) {
+					base64Array.clear();
 					e.printStackTrace();
 				}
-
 			}
 		});
+
 	}
 
 	public JSONObject handleCallJavaScriptMethod(String handlerName, String data) {
-		if (handlerName.equals("saveBase64ImgToLocal")) {
-			String imagePath = saveBase64ImgToLocal(data);
-			JSONObject pathObject = new JSONObject();
-			try {
-				pathObject.put("imagePath", imagePath);
-				JSONObject event = createEventObject(MessageType.MessageTypeLocalImagePath, pathObject);
-				return event;
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-		}
 		return null;
 	}
 

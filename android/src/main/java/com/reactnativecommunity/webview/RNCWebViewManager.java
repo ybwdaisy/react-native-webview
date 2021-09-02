@@ -585,8 +585,9 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         break;
       case COMMAND_CALL_JSB_HANDLER:
         String handlerName = args != null ? args.getString(0) : "";
+        String data = args != null ? args.getString(1) : "";
         reactWebView = (RNCWebView) root;
-        reactWebView.callJavaScriptBridgeHandler(handlerName, bridgeInterface);
+        reactWebView.callJavaScriptBridgeHandler(handlerName, data, bridgeInterface);
         break;
     }
   }

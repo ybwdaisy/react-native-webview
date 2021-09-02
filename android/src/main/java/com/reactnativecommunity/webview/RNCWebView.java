@@ -27,7 +27,6 @@ import com.reactnativecommunity.webview.jsbridge.BridgeInterface;
 import com.reactnativecommunity.webview.jsbridge.CallBackFunction;
 import com.reactnativecommunity.webview.jsbridge.WebViewJavascriptBridge;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
@@ -180,8 +179,8 @@ public class RNCWebView extends WebView implements LifecycleEventListener, WebVi
 		}
 	}
 
-	public void callJavaScriptBridgeHandler(String handlerName, BridgeInterface bridgeInterface) {
-		this.callHandler(handlerName, null, new CallBackFunction() {
+	public void callJavaScriptBridgeHandler(String handlerName, String data, BridgeInterface bridgeInterface) {
+		this.callHandler(handlerName, data, new CallBackFunction() {
 			@Override
 			public void onCallBack(String data) {
 				// 区分不同 hanlderName 处理不同逻辑

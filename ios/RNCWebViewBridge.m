@@ -17,6 +17,7 @@
 typedef void (^MessageCallback)(NSMutableDictionary *data);
 
 + (instancetype)bridgeForWebView:(id)webView callback:(MessageCallback)callback {
+    NSMutableArray *base64Array = [NSMutableArray arrayWithCapacity:0];
     WebViewJavascriptBridge *bridge = [WebViewJavascriptBridge bridgeForWebView:webView];
     // 获取登录token
     [bridge registerHandler:@"getToken" handler:^(id data, WVJBResponseCallback responseCallback) {
@@ -138,33 +139,6 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
             responseCallback(responseData);
         }];
     }];
-    
-    // 将 Base64 格式图片保存至本地
-    [bridge registerHandler:@"saveBase64ImgToLocal" handler:^(id data, WVJBResponseCallback responseCallback) {
-        NSString *base64String = [data objectForKey:@"data"];
-        NSString *imagePath = [self saveBase64ImgToLocal:base64String];
-        RNCBridgeResponse *response = [[RNCBridgeResponse alloc]init];
-        
-        NSMutableDictionary *responseData = [[NSMutableDictionary alloc]init];
-        [responseData setValue:imagePath forKey:@"imagePath"];
-        
-        if (![imagePath isEqualToString:@""]) {
-            [response setStatus:ResponseStatusSuccess];
-            [response setMsg:@"saveBase64ToLocal:ok"];
-            [response setData:responseData];
-        } else {
-            [response setStatus:ResponseStatusFail];
-            [response setMsg:@"saveBase64ToLocal:fail"];
-            [response setData:responseData];
-        }
-        NSMutableDictionary *res = [response getProperties];
-        responseCallback(res);
-        
-        NSMutableDictionary *result = [self createEventData:MessageTypeLocalImagePath withData:responseData];
-        if (callback) {
-            callback(result);
-        }
-    }];
 
     // 获取设备信息
     [bridge registerHandler:@"getDeviceInfo" handler:^(id data, WVJBResponseCallback responseCallback) {
@@ -190,15 +164,52 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
         responseCallback([response getProperties]);
     }];
     
+    // 分片上传 Base64 图片
+    [bridge registerHandler:@"uploadBase64Image" handler:^(id data, WVJBResponseCallback responseCallback) {
+        if (data == nil) {
+            return;
+        }
+        NSString *total = [data objectForKey:@"length"];
+        NSInteger totalCount = [total intValue];
+        NSInteger arrayCount = [base64Array count];
+        if (arrayCount < totalCount - 1) {
+            [base64Array addObject:data];
+            RNCBridgeResponse *response = [[RNCBridgeResponse alloc]init];
+            [response setStatus:ResponseStatusSuccess];
+            [response setMsg:@"uploadBase64Image:ok"];
+            [response setData:nil];
+            responseCallback([response getProperties]);
+            return;
+        }
+        [base64Array addObject:data];
+        RNCBridgeResponse *response = [[RNCBridgeResponse alloc]init];
+        [response setStatus:ResponseStatusSuccess];
+        [response setMsg:@"uploadBase64Image:ok"];
+        [response setData:nil];
+        responseCallback([response getProperties]);
+        
+        NSString *base64String = @"";
+        for(NSMutableDictionary *arrayItem in base64Array) {
+            NSString *fragment = [arrayItem objectForKey:@"fragment"];
+            base64String = [base64String stringByAppendingString:fragment];
+        }
+        NSString *imagePath = [self saveBase64ImgToLocal:base64String];
+        
+        NSMutableDictionary *responseData = [[NSMutableDictionary alloc]init];
+        [responseData setValue:imagePath forKey:@"imagePath"];
+        
+        NSMutableDictionary *result = [self createEventData:MessageTypeLocalImagePath withData:responseData];
+        if (callback) {
+            callback(result);
+        }
+        [base64Array removeAllObjects];
+
+    }];
+    
     return bridge;
 }
 
 + (NSMutableDictionary *)handleCallJavaScriptMethod:(NSString *)handlerName data:(id)data {
-    if ([handlerName isEqualToString:@"saveBase64ImgToLocal"]) {
-        NSString *imagePath = [self saveBase64ImgToLocal: data];
-        NSMutableDictionary *result = [self createEventData:MessageTypeLocalImagePath withData:@{@"imagePath": imagePath}];
-        return result;
-    }
     // TODO
     return nil;
 }
