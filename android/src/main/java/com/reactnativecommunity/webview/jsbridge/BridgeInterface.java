@@ -49,6 +49,8 @@ public class BridgeInterface {
 		MessageTypeSessionShareData,
 		MessageTypeTimelineShareData,
 		MessageTypeFeedShareData,
+		MessageTypeWechatAuth,
+		MessageTypeShare,
 		MessageTypeShareSession,
 		MessageTypeShareTimeline,
 		MessageTypeShareFeed,
@@ -180,6 +182,20 @@ public class BridgeInterface {
 			@Override
 			public void handler(String data, CallBackFunction function) {
 				handleMessage("updateFeedShareData", data, MessageType.MessageTypeFeedShareData, function);
+			}
+		});
+		// 微信授权
+		webView.registerHandler("wechatAuth", new BridgeHandler() {
+			@Override
+			public void handler(String data, CallBackFunction function) {
+				handleMessage("wechatAuth", data, MessageType.MessageTypeWechatAuth, function);
+			}
+		});
+		// 分享弹窗
+		webView.registerHandler("share", new BridgeHandler() {
+			@Override
+			public void handler(String data, CallBackFunction function) {
+				handleMessage("share", data, MessageType.MessageTypeShare, function);
 			}
 		});
 		// 分享到微信会话
@@ -407,6 +423,10 @@ public class BridgeInterface {
 				return "timelineShareData";
 			case MessageTypeFeedShareData:
 				return "feedShareData";
+			case MessageTypeWechatAuth:
+				return "wechatAuth";
+			case MessageTypeShare:
+				return "share";
 			case MessageTypeShareSession:
 				return "shareSession";
 			case MessageTypeShareTimeline:

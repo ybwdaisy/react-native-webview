@@ -109,6 +109,26 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
             responseCallback(responseData);
         }];
     }];
+    // 微信授权
+    [bridge registerHandler:@"wechatAuth" handler:^(id data, WVJBResponseCallback responseCallback) {
+        [self handleMessage:@"wechatAuth" widthData:data andType:MessageTypeWechatAuth messageCallback:^(NSMutableDictionary *data) {
+            if (callback) {
+                callback(data);
+            }
+        } responseCallback:^(id responseData) {
+            responseCallback(responseData);
+        }];
+    }];
+    // 分享弹窗
+    [bridge registerHandler:@"share" handler:^(id data, WVJBResponseCallback responseCallback) {
+        [self handleMessage:@"share" widthData:data andType:MessageTypeShare messageCallback:^(NSMutableDictionary *data) {
+            if (callback) {
+                callback(data);
+            }
+        } responseCallback:^(id responseData) {
+            responseCallback(responseData);
+        }];
+    }];
     // 分享到微信会话
     [bridge registerHandler:@"shareToSession" handler:^(id data, WVJBResponseCallback responseCallback) {
         [self handleMessage:@"shareToSession" widthData:data andType:MessageTypeShareSession messageCallback:^(NSMutableDictionary *data) {
@@ -305,6 +325,10 @@ typedef void (^MessageCallback)(NSMutableDictionary *data);
             return @"timelineShareData";
         case MessageTypeFeedShareData:
             return @"feedShareData";
+        case MessageTypeWechatAuth:
+            return @"wechatAuth";
+        case MessageTypeShare:
+            return @"share";
         case MessageTypeShareSession:
             return @"shareSession";
         case MessageTypeShareTimeline:

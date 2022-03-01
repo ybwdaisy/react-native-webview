@@ -15,6 +15,8 @@ typedef enum {
     MessageTypeSessionShareData,
     MessageTypeTimelineShareData,
     MessageTypeFeedShareData,
+    MessageTypeWechatAuth,
+    MessageTypeShare,
     MessageTypeShareSession,
     MessageTypeShareTimeline,
     MessageTypeShareFeed,
