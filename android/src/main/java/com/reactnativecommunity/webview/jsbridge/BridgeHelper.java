@@ -162,7 +162,9 @@ public class BridgeHelper implements WebViewJavascriptBridge {
 						if (!TextUtils.isEmpty(responseId)) {
 							CallBackFunction function = responseCallbacks.get(responseId);
 							String responseData = m.getResponseData();
-							function.onCallBack(responseData);
+							if (function != null) {
+								function.onCallBack(responseData);
+							}
 							responseCallbacks.remove(responseId);
 						} else {
 							CallBackFunction responseFunction = null;
