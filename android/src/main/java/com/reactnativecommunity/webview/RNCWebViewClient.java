@@ -73,6 +73,7 @@ public class RNCWebViewClient extends WebViewClient {
 			webView.bridgeHelper.flushMessageQueue();
 			return true;
 		} else {
+			webView.progressChangedFilter.setWaitingForCommandLoadUrl(true);
 			dispatchEvent(view, new TopShouldStartLoadWithRequestEvent(view.getId(), createWebViewEvent(view, url)));
 		}
 		return false;

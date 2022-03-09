@@ -51,6 +51,8 @@ public class RNCWebView extends WebView implements LifecycleEventListener, WebVi
 	protected static final String JAVASCRIPT_INTERFACE = "ReactNativeWebView";
 	public BridgeHelper bridgeHelper;
 
+	protected ProgressChangedFilter progressChangedFilter;
+
 	/**
 	 * WebView must be created with an context of the current activity
 	 * <p>
@@ -62,6 +64,7 @@ public class RNCWebView extends WebView implements LifecycleEventListener, WebVi
 		super(reactContext);
 		this.setVerticalScrollBarEnabled(false);
 		this.setHorizontalScrollBarEnabled(false);
+		progressChangedFilter = new ProgressChangedFilter();
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			WebView.setWebContentsDebuggingEnabled(true);
 		}

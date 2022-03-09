@@ -51,6 +51,8 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
 	protected View mVideoView;
 	protected WebChromeClient.CustomViewCallback mCustomViewCallback;
 
+	protected ProgressChangedFilter progressChangedFilter;
+
 	public RNCWebChromeClient(ReactContext reactContext, WebView webView) {
 		this.mReactContext = reactContext;
 		this.mWebView = webView;
@@ -105,7 +107,7 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
 	public void onProgressChanged(WebView webView, int newProgress) {
 		super.onProgressChanged(webView, newProgress);
 		final String url = webView.getUrl();
-		if (url != null) {
+		if (progressChangedFilter.isWaitingForCommandLoadUrl()) {
 			return;
 		}
 		WritableMap event = Arguments.createMap();
@@ -163,5 +165,9 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
 
 	protected ViewGroup getRootView() {
 		return (ViewGroup) mReactContext.getCurrentActivity().findViewById(android.R.id.content);
+	}
+
+	public void setProgressChangedFilter(ProgressChangedFilter filter) {
+		progressChangedFilter = filter;
 	}
 }

@@ -568,6 +568,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         if (args == null) {
           throw new RuntimeException("Arguments for loading an url are null!");
         }
+        ((RNCWebView) root).progressChangedFilter.setWaitingForCommandLoadUrl(false);
         root.loadUrl(args.getString(0));
         break;
       case COMMAND_FOCUS:
@@ -660,6 +661,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         }
       };
       webView.setWebChromeClient(mWebChromeClient);
+      mWebChromeClient.setProgressChangedFilter(mWebView.progressChangedFilter);
     } else {
       if (mWebChromeClient != null) {
         mWebChromeClient.onHideCustomView();
@@ -671,6 +673,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         }
       };
       webView.setWebChromeClient(mWebChromeClient);
+      mWebChromeClient.setProgressChangedFilter(mWebView.progressChangedFilter);
     }
   }
 }
